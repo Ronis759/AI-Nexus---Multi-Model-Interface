@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, StopCircle, User, Bot, Loader2 } from 'lucide-react';
+import { Send, StopCircle, User, Bot, Sparkles, Rocket, Brain, Zap, MessageSquareQuote } from 'lucide-react';
 import { ModelId, Message, MODEL_CONFIGS } from '../types';
 import { generateStreamResponse } from '../services/geminiService';
 
@@ -13,6 +13,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ selectedModel }) =
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const activeConfig = MODEL_CONFIGS[selectedModel];
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -22,7 +23,6 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ selectedModel }) =
     scrollToBottom();
   }, [messages, isLoading]);
 
-  // Auto-resize textarea
   useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
@@ -39,17 +39,20 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ selectedModel }) =
       role: 'user',
       content: input.trim(),
       timestamp: Date.now(),
+      modelUsed: undefined 
     };
 
     setMessages((prev) => [...prev, userMessage]);
     setInput('');
     setIsLoading(true);
     
-    if (textareaRef.current) textareaRef.current.style.height = 'auto';
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+    }
 
     try {
       const assistantMessageId = (Date.now() + 1).toString();
-      // Placeholder for stream
+      
       setMessages((prev) => [
         ...prev,
         {
@@ -61,7 +64,6 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ selectedModel }) =
         },
       ]);
 
-      // Convert current messages to history format for API
       const history = messages.map(m => ({
         role: m.role === 'user' ? 'user' : 'model',
         parts: [{ text: m.content }]
@@ -106,7 +108,6 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ selectedModel }) =
   };
 
   const renderMessageContent = (text: string) => {
-    // Basic formatted rendering
     return text.split('\n').map((line, i) => (
       <React.Fragment key={i}>
         {line}
@@ -115,69 +116,130 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ selectedModel }) =
     ));
   };
 
-  const activeConfig = MODEL_CONFIGS[selectedModel];
+  const getModelIcon = (id: ModelId) => {
+    switch (id) {
+      case ModelId.GEMINI_3: return Sparkles;
+      case ModelId.GROK: return Rocket;
+      case ModelId.DEEPSEEK: return Brain;
+      case ModelId.CHATGPT: return Zap;
+      case ModelId.CLAUDE: return MessageSquareQuote;
+      default: return Bot;
+    }
+  };
+
+  const ActiveIcon = getModelIcon(selectedModel);
 
   return (
-    <div className="w-full max-w-4xl mx-auto flex flex-col h-[600px] glass-panel rounded-3xl overflow-hidden shadow-2xl border border-gray-800 relative">
+    <div className={`
+      relative w-full max-w-5xl mx-auto flex flex-col h-[650px] 
+      glass-panel rounded-3xl overflow-hidden shadow-2xl transition-all duration-500 
+      border-2 ${activeConfig.borderColor}
+      ${activeConfig.shadowColor}
+    `}>
       
-      {/* Chat Header */}
-      <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-gray-700 to-transparent opacity-50"></div>
+      {/* Top Bar / Header */}
+      <div className={`
+        flex items-center justify-between px-6 py-4 
+        bg-gray-950/80 backdrop-blur-md border-b border-gray-800
+      `}>
+        <div className="flex items-center gap-3">
+          <div className={`p-2 rounded-lg bg-gray-900 border ${activeConfig.borderColor} ${activeConfig.iconColor}`}>
+             <ActiveIcon className="w-5 h-5" />
+          </div>
+          <div>
+            <h2 className={`text-base font-bold tracking-wide ${activeConfig.iconColor.replace('text-', 'text-')}`}>
+              {activeConfig.label}
+            </h2>
+            <p className="text-xs text-gray-400">
+              Онлайн
+            </p>
+          </div>
+        </div>
+        <div className="flex gap-2">
+            <span className="w-3 h-3 rounded-full bg-red-500/20 border border-red-500/50"></span>
+            <span className="w-3 h-3 rounded-full bg-yellow-500/20 border border-yellow-500/50"></span>
+            <span className="w-3 h-3 rounded-full bg-green-500/20 border border-green-500/50"></span>
+        </div>
+      </div>
       
       {/* Messages Area */}
-      <div className="flex-1 overflow-y-auto p-6 space-y-6 scroll-smooth">
+      <div className={`
+        flex-1 overflow-y-auto p-4 sm:p-6 space-y-6 scroll-smooth custom-scrollbar relative
+        ${activeConfig.selectionBg.replace('bg-', 'bg-gradient-to-b from-gray-950 to-')}
+      `}>
+        {/* Subtle background logo/watermark */}
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-[0.05]">
+           <ActiveIcon className={`w-64 h-64 ${activeConfig.iconColor}`} />
+        </div>
+
         {messages.length === 0 && (
-          <div className="h-full flex flex-col items-center justify-center text-center text-gray-500 p-8">
-            <div className={`p-4 rounded-full bg-gray-800/50 mb-4 animate-pulse`}>
-              <Bot className={`w-8 h-8 ${activeConfig.iconColor}`} />
+          <div className="h-full flex flex-col items-center justify-center text-center text-gray-500 p-8 animate-fade-in z-10 relative">
+            <div className={`
+              p-6 rounded-3xl mb-6 shadow-2xl border-2 
+              ${activeConfig.selectionBg} ${activeConfig.borderColor} ${activeConfig.shadowColor}
+            `}>
+              <ActiveIcon className={`w-12 h-12 ${activeConfig.iconColor}`} />
             </div>
-            <p className="text-lg font-medium text-gray-300">Готовы начать работу с {activeConfig.label}?</p>
-            <p className="text-sm max-w-md mt-2 opacity-60">Спросите что-нибудь о коде, науке или творчестве.</p>
+            <h3 className="text-2xl font-bold text-white mb-2">Привет! Я {activeConfig.label}</h3>
+            <p className="text-base max-w-md text-gray-300">
+               {MODEL_CONFIGS[selectedModel].description}
+            </p>
           </div>
         )}
         
-        {messages.map((msg) => (
-          <div
-            key={msg.id}
-            className={`flex gap-4 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
-          >
-            {msg.role !== 'user' && (
-              <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 mt-1 ${
-                  msg.modelUsed ? MODEL_CONFIGS[msg.modelUsed].iconColor.replace('text-', 'bg-').replace('400', '500/20') : 'bg-gray-700'
-                }`}>
-                <Bot className={`w-5 h-5 ${msg.modelUsed ? MODEL_CONFIGS[msg.modelUsed].iconColor : 'text-gray-400'}`} />
-              </div>
-            )}
-            
-            <div
-              className={`
-                max-w-[85%] sm:max-w-[75%] rounded-2xl px-5 py-3.5 text-sm leading-relaxed shadow-sm
-                ${msg.role === 'user' 
-                  ? 'bg-blue-600 text-white ml-12 rounded-tr-sm' 
-                  : 'bg-gray-800/80 text-gray-100 mr-12 rounded-tl-sm border border-gray-700/50'
-                }
-                ${msg.role === 'system' ? 'bg-red-900/20 text-red-300 border-red-900/30' : ''}
-              `}
-            >
-               {renderMessageContent(msg.content)}
-            </div>
+        {messages.map((msg) => {
+            const isUser = msg.role === 'user';
+            const isSystem = msg.role === 'system';
+            // Use saved model for history messages, otherwise current
+            const modelUsed = msg.modelUsed || selectedModel;
+            const modelConfig = MODEL_CONFIGS[modelUsed];
+            const MsgIcon = isUser ? User : getModelIcon(modelUsed);
 
-            {msg.role === 'user' && (
-              <div className="w-8 h-8 rounded-lg bg-gray-700 flex items-center justify-center shrink-0 mt-1">
-                <User className="w-5 h-5 text-gray-300" />
+            return (
+              <div
+                key={msg.id}
+                className={`flex gap-4 animate-slide-up ${isUser ? 'justify-end' : 'justify-start'}`}
+              >
+                {!isUser && (
+                  <div className={`
+                    w-10 h-10 rounded-xl flex items-center justify-center shrink-0 mt-1 shadow-lg
+                    ${isSystem ? 'bg-red-900/50' : `bg-gray-900 border ${modelConfig.borderColor}`}
+                  `}>
+                    <MsgIcon className={`w-6 h-6 ${isSystem ? 'text-red-400' : modelConfig.iconColor}`} />
+                  </div>
+                )}
+                
+                <div
+                  className={`
+                    max-w-[85%] sm:max-w-[75%] rounded-2xl px-6 py-4 text-base leading-7 shadow-xl backdrop-blur-md border
+                    ${isUser 
+                      ? 'bg-gradient-to-br from-gray-700 to-gray-800 text-white rounded-tr-sm border-gray-600' 
+                      : `${modelConfig.messageBg} ${modelConfig.messageBorder} ${modelConfig.textColor} rounded-tl-sm shadow-[0_4px_20px_-5px_rgba(0,0,0,0.5)]`
+                    }
+                    ${isSystem ? 'bg-red-900/20 text-red-200 border-red-900/50' : ''}
+                  `}
+                >
+                   {renderMessageContent(msg.content)}
+                </div>
+
+                {isUser && (
+                  <div className="w-10 h-10 rounded-xl bg-gray-800 border border-gray-600 flex items-center justify-center shrink-0 mt-1 shadow-lg">
+                    <User className="w-6 h-6 text-gray-300" />
+                  </div>
+                )}
               </div>
-            )}
-          </div>
-        ))}
+            );
+        })}
         {isLoading && messages[messages.length - 1]?.role === 'user' && (
-          <div className="flex gap-4 justify-start animate-pulse">
-             <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 mt-1 bg-gray-800`}>
-                <Loader2 className="w-5 h-5 text-gray-400 animate-spin" />
+          <div className="flex gap-4 justify-start animate-pulse pl-1">
+             <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 mt-1 bg-gray-900 border ${activeConfig.borderColor}`}>
+                <ActiveIcon className={`w-5 h-5 ${activeConfig.iconColor} animate-spin`} />
               </div>
-              <div className="bg-gray-800/50 rounded-2xl px-5 py-4 rounded-tl-sm">
-                 <div className="flex gap-1">
-                    <span className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></span>
-                    <span className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
-                    <span className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></span>
+              <div className={`rounded-2xl px-6 py-5 rounded-tl-sm ${activeConfig.messageBg} border ${activeConfig.messageBorder}`}>
+                 <div className="flex gap-2 items-center h-full">
+                    <span className={`w-2 h-2 rounded-full ${activeConfig.iconColor.replace('text-', 'bg-')} animate-bounce`} style={{ animationDelay: '0ms' }}></span>
+                    <span className={`w-2 h-2 rounded-full ${activeConfig.iconColor.replace('text-', 'bg-')} animate-bounce`} style={{ animationDelay: '150ms' }}></span>
+                    <span className={`w-2 h-2 rounded-full ${activeConfig.iconColor.replace('text-', 'bg-')} animate-bounce`} style={{ animationDelay: '300ms' }}></span>
                  </div>
               </div>
           </div>
@@ -186,13 +248,13 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ selectedModel }) =
       </div>
 
       {/* Input Area */}
-      <div className="p-4 bg-gray-900/80 border-t border-gray-800 backdrop-blur-md">
+      <div className={`p-5 bg-gray-950/80 backdrop-blur-xl border-t ${activeConfig.borderColor.replace('border-', 'border-opacity-30 border-')}`}>
         <form 
           onSubmit={handleSubmit}
           className={`
-            relative flex items-end gap-2 p-2 rounded-2xl border transition-all duration-300
-            bg-gray-950/50 focus-within:bg-gray-950
-            ${activeConfig.borderColor} focus-within:ring-1 focus-within:ring-indigo-500/30
+            relative flex items-end gap-3 p-2 rounded-2xl border transition-all duration-300
+            bg-gray-900/50 hover:bg-gray-900/90 focus-within:bg-gray-950
+            ${activeConfig.borderColor} focus-within:ring-2 ${activeConfig.ringColor} focus-within:ring-opacity-50
           `}
         >
           <textarea
@@ -200,29 +262,24 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ selectedModel }) =
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder={`Спросите ${activeConfig.label} о чем-нибудь...`}
-            className="w-full bg-transparent text-gray-100 placeholder-gray-500 text-sm p-3 max-h-32 resize-none focus:outline-none custom-scrollbar"
+            placeholder={`Задайте вопрос ${activeConfig.label}...`}
+            className="w-full bg-transparent text-gray-100 placeholder-gray-500 text-base p-3 max-h-32 resize-none focus:outline-none custom-scrollbar"
             rows={1}
           />
           <button
             type="submit"
             disabled={!input.trim() || isLoading}
             className={`
-              p-3 rounded-xl transition-all duration-200 shrink-0 mb-0.5
-              ${!input.trim() || isLoading 
+              p-3.5 rounded-xl transition-all duration-300 shrink-0 mb-0.5
+              ${!input.trim() || isLoading
                 ? 'bg-gray-800 text-gray-600 cursor-not-allowed' 
-                : `bg-gradient-to-br ${activeConfig.gradient} text-white shadow-lg hover:opacity-90 hover:scale-105`
+                : `bg-gradient-to-br ${activeConfig.gradient} text-white shadow-lg hover:shadow-lg hover:brightness-110 active:scale-95`
               }
             `}
           >
             {isLoading ? <StopCircle className="w-5 h-5" /> : <Send className="w-5 h-5" />}
           </button>
         </form>
-        <div className="text-center mt-2">
-          <p className="text-[10px] text-gray-600">
-            ИИ может ошибаться. Проверяйте важную информацию.
-          </p>
-        </div>
       </div>
     </div>
   );

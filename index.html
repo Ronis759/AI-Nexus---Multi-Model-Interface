@@ -12,19 +12,9 @@
             colors: {
               gray: {
                 850: '#1f2937',
-                900: '#111827',
-                950: '#030712',
+                900: '#0f172a',
+                950: '#020617',
               },
-              primary: {
-                500: '#3b82f6',
-                600: '#2563eb',
-              },
-              'gemini-start': '#4facfe',
-              'gemini-end': '#00f2fe',
-              'chatgpt-start': '#10a37f',
-              'chatgpt-end': '#25cf98',
-              'grok-start': '#f0f0f0',
-              'grok-end': '#a0a0a0',
             },
             fontFamily: {
               sans: ['Inter', 'sans-serif'],
@@ -32,6 +22,9 @@
             animation: {
               'gradient-x': 'gradient-x 15s ease infinite',
               'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+              'blob': 'blob 10s infinite',
+              'fade-in': 'fadeIn 0.5s ease-out forwards',
+              'slide-up': 'slideUp 0.5s ease-out forwards',
             },
             keyframes: {
               'gradient-x': {
@@ -44,6 +37,20 @@
                   'background-position': 'right center',
                 },
               },
+              blob: {
+                "0%": { transform: "translate(0px, 0px) scale(1)" },
+                "33%": { transform: "translate(30px, -50px) scale(1.1)" },
+                "66%": { transform: "translate(-20px, 20px) scale(0.9)" },
+                "100%": { transform: "translate(0px, 0px) scale(1)" }
+              },
+              fadeIn: {
+                '0%': { opacity: '0' },
+                '100%': { opacity: '1' },
+              },
+              slideUp: {
+                '0%': { opacity: '0', transform: 'translateY(20px)' },
+                '100%': { opacity: '1', transform: 'translateY(0)' },
+              }
             },
           },
         },
@@ -53,28 +60,42 @@
       @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
       body {
         font-family: 'Inter', sans-serif;
-        background-color: #030712;
-        color: #f9fafb;
+        background-color: #020617; /* Slate-950 Dark Mode */
+        color: #f8fafc; /* Slate-50 Text */
       }
-      /* Custom scrollbar */
+      /* Custom scrollbar - Dark Mode */
       ::-webkit-scrollbar {
         width: 8px;
       }
       ::-webkit-scrollbar-track {
-        background: #111827; 
+        background: #0f172a; 
       }
       ::-webkit-scrollbar-thumb {
-        background: #374151; 
+        background: #334155; 
         border-radius: 4px;
       }
       ::-webkit-scrollbar-thumb:hover {
-        background: #4b5563; 
+        background: #475569; 
       }
       .glass-panel {
-        background: rgba(17, 24, 39, 0.7);
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
+        background: rgba(15, 23, 42, 0.6);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
         border: 1px solid rgba(255, 255, 255, 0.08);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      }
+      .glass-card {
+        background: rgba(30, 41, 59, 0.4);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+      }
+      .glass-card:hover {
+        background: rgba(30, 41, 59, 0.7);
+        border-color: rgba(255, 255, 255, 0.15);
+        transform: translateY(-5px);
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
       }
     </style>
   <script type="importmap">
